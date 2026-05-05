@@ -101,6 +101,25 @@ def _(tensor2d):
 
 
 @app.cell
+def _(torch):
+    tensor3d = torch.tensor([[[1,2],[3,4]],[[5,6],[7,8]]])
+    print(tensor3d)
+    return (tensor3d,)
+
+
+@app.cell
+def _(tensor3d):
+    tensor3d.shape
+    return
+
+
+@app.cell
+def _(tensor3d):
+    tensor3d.view(1,8), tensor3d.view(2,4), tensor3d.view(4,2), tensor3d.view(4,2,1), tensor3d.view(1,2,4), tensor3d.view(1,4,2), tensor3d.view(8)
+    return
+
+
+@app.cell
 def _():
     return
 

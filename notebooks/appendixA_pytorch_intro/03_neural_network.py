@@ -38,7 +38,8 @@ def _(torch):
 
 
 @app.cell
-def _(NeuralNetwork):
+def _(NeuralNetwork, torch):
+    torch.manual_seed(42)
     model = NeuralNetwork(50, 3)
     print(model)
     return (model,)
@@ -66,6 +67,31 @@ def _(model):
 @app.cell
 def _(model):
     print(model.layers[0].bias.shape)
+    return
+
+
+@app.cell
+def _(model, torch):
+    torch.manual_seed(42)
+    X = torch.rand((1,50))
+    out = model(X)
+    print(out)
+    return (X,)
+
+
+@app.cell
+def _(X, model, torch):
+    with torch.no_grad():
+        out_nograd = model(X)
+    print(out_nograd)
+    return
+
+
+@app.cell
+def _(X, model, torch):
+    with torch.no_grad():
+        out_class = torch.softmax(model(X), dim=1)
+    print(out_class)
     return
 
 
