@@ -6,6 +6,13 @@ app = marimo.App(width="medium", auto_download=["html"])
 
 @app.cell
 def _():
+    import marimo as mo
+
+    return (mo,)
+
+
+@app.cell
+def _():
     import os
     import requests
 
@@ -39,6 +46,22 @@ def _(file_path):
     print("Total number of character:", len(raw_text))
     print(raw_text[:99])
     return (raw_text,)
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    # Tokenizer
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Regex experimentation
+    """)
+    return
 
 
 @app.cell
@@ -84,11 +107,128 @@ def _(preprocessed):
 def _(vocab):
     tokenized_vocab = {word:i for i,word in enumerate(vocab)}
     print({word:i for word,i in tokenized_vocab.items() if i < 50})
+    return (tokenized_vocab,)
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Simple Tokenizer
+    """)
     return
 
 
 @app.cell
+def _(re):
+    class SimpleTokenizerV1:
+        def __init__(self, vocab):
+            # Vocab is a dict of the fomat {word:idx}
+            self.str_to_int = vocab
+            self.int_to_str = {i:s for s,i in vocab.items()}
+
+        def encode(self, text):
+            pattern = re.compile(r'([,.:;?_!"()\']|--|\s)')
+            preprocessed = re.split(pattern, text)
+            striped = [item.strip() for item in preprocessed if item.strip()]
+            ids = [self.str_to_int[s] for s in striped]
+            return ids
+
+        def decode(self, ids):
+            text = " ".join([self.int_to_str[i] for i in ids])
+
+            cleaned_text = re.sub(r'\s+([,.?!"()\'])', r'\1', text)
+            return cleaned_text
+
+    return (SimpleTokenizerV1,)
+
+
+@app.cell
+def _(SimpleTokenizerV1, tokenized_vocab):
+    tokentizer_v1 = SimpleTokenizerV1(tokenized_vocab)
+    tokenized_test_text = """"It's the last he painted, you know," Mrs. Gisburn said with pardonable pride."""
+    print(tokentizer_v1.encode(tokenized_test_text))
+    return tokenized_test_text, tokentizer_v1
+
+
+@app.cell
+def _(tokenized_test_text, tokentizer_v1):
+    _ids = tokentizer_v1.encode(tokenized_test_text)
+    print(tokentizer_v1.decode(_ids))
+    return
+
+
+@app.cell(disabled=True)
+def _(tokentizer_v1):
+    print(tokentizer_v1.encode("Hello, do you like tea?"))
+    return
+
+
+@app.cell(hide_code=True)
 def _():
+    ### Handling unknown words and end
+    return
+
+
+@app.cell
+def _(preprocessed):
+    all_tokens = sorted(list(set(preprocessed)))
+    all_tokens.extend(["<|endoftext|>", "<|unk|>"])
+    vocab_v2 = {token:integer for integer,token in enumerate(all_tokens)}
+    print(len(vocab_v2.items()))
+    return (vocab_v2,)
+
+
+@app.cell
+def _(vocab_v2):
+    for i, item in enumerate(list(vocab_v2.items())[-5:]):
+        print(item)
+    return
+
+
+@app.cell
+def _(re):
+    class SimpleTokenizerV2:
+        def __init__(self, vocab):
+            # Vocab is a dict of the fomat {word:idx}
+            self.str_to_int = vocab
+            self.int_to_str = {i:s for s,i in vocab.items()}
+
+        def encode(self, text):
+            pattern = re.compile(r'([,.:;?_!"()\']|--|\s)')
+            preprocessed = re.split(pattern, text)
+            striped = [item.strip() for item in preprocessed if item.strip()]
+            unknowns = [item if item in self.str_to_int else "<|unk|>" for item in striped]
+            ids = [self.str_to_int[s] for s in unknowns]
+            return ids
+
+        def decode(self, ids):
+            text = " ".join([self.int_to_str[i] for i in ids])
+
+            cleaned_text = re.sub(r'\s+([,.?!"()\'])', r'\1', text)
+            return cleaned_text
+
+    return (SimpleTokenizerV2,)
+
+
+@app.cell
+def _():
+    text1 = "Hello, do you like tea?"
+    text2 = "In the sunlit terraces of the palace."
+    sample_text_v2 = " <|endoftext|> ".join((text1, text2))
+    print(sample_text_v2)
+    return (sample_text_v2,)
+
+
+@app.cell
+def _(SimpleTokenizerV2, sample_text_v2, vocab_v2):
+    tokentizer_v2 = SimpleTokenizerV2(vocab_v2)
+    print(tokentizer_v2.encode(sample_text_v2))
+    return (tokentizer_v2,)
+
+
+@app.cell
+def _(sample_text_v2, tokentizer_v2):
+    print(tokentizer_v2.decode(tokentizer_v2.encode(sample_text_v2)))
     return
 
 
