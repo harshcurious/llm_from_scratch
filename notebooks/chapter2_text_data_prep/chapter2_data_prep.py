@@ -164,8 +164,10 @@ def _(tokentizer_v1):
 
 
 @app.cell(hide_code=True)
-def _():
-    ### Handling unknown words and end
+def _(mo):
+    mo.md(r"""
+    ### Handling unknown words and end of sentence
+    """)
     return
 
 
@@ -229,6 +231,146 @@ def _(SimpleTokenizerV2, sample_text_v2, vocab_v2):
 @app.cell
 def _(sample_text_v2, tokentizer_v2):
     print(tokentizer_v2.decode(tokentizer_v2.encode(sample_text_v2)))
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Byte Pair Encoding
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    - Orignally proposed by _Philip Gage_ in **1994**
+        - Focused on **compression**
+        - Replaces the highest frequency _pair of bytes_ with a single byte not in original data
+        - Use a lookup table to recreate the original dataset
+        - Modified to not just replace _pair of bytes_ but any contigous sequence of characters
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ### Example
+
+    #### Original
+    - Text: `aaabdaaabac`
+        - Most frequent pair: `aa`; replace with `Z`
+    - Step 1 text: `ZabdZabac` + `Z=aa`
+        - Now most frequent pair is `ab`
+    - Step 2 text: `ZYdZYac` + `Y=ab` & `Z=aa`
+        - Now it `ac` once so we can stop now
+    - Another option is _recursive byte-pair_ encoding where we replace `ZY` with `X`
+    ```
+    XdXac
+    X=ZY
+    Y=ab
+    Z=aa
+    ```
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    #### Modified
+    - For language modeling by encoding **plaintext** --> **tokens**
+    - Compression is not the priority
+    - Process:
+        - Treat set of unique characters as 1-character-long n-grams (initial token)
+        - Most frequent _pair of adjacent_ tokens is merged into new, longer n-grams and all instances of the pair with new token
+        - This is repeated until vocab size is restricted to a prescribed size
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.mermaid(
+        """
+        graph TD
+        Start(["Input String:<br/>aaabdaaabac"]) --> Init[Initialize Vocabulary]
+    
+        subgraph S1 [Step 1: Base Characters]
+        direction LR
+            Vocab1["Vocab (Size 4):<br/>a:0, b:1, d:2, c:3"]
+            Enc1["Encoding:<br/>0,0,0,1,2,0,0,0,1,0,3"]
+        end
+    
+        Init --> S1
+        S1 --Set aa=4--> S2
+    
+        subgraph S2 [Step 2: Vocab Size 5]
+        direction LR
+            Vocab2["Vocab (Size 5):<br/>a:0, b:1, d:2, c:3, aa:4"]
+            Enc2["Encoding:<br/>4,0,1,2,4,0,1,0,3"]
+        end
+    
+        S2 -- Set ab=5 --> S3
+    
+        subgraph S3 [Step 3: Vocab Size 6]
+        direction LR
+            Vocab3["Vocab (Size 6):<br/>... aa:4, ab:5"]
+            Enc3["Encoding:<br/>4,5,2,4,5,0,3"]
+        end
+    
+        S3 -- "Set aaab=6, aaabd=7" --> S4
+    
+        subgraph S4 [Step 4: Vocab Size 8]
+        direction LR
+            Vocab4["Vocab (Size 8):<br/>... aaab:6, aaabd:7"]
+            Enc4["Encoding:<br/>7,6,0,3"]
+        end
+    
+        style S2 fill:#f9f,stroke:#333
+        style S3 fill:#bbf,stroke:#333
+        style S4 fill:#bfb,stroke:#000
+        """
+    )
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ### Byte-level BPE
+
+    Convert any text to UTF-8 and then treat it as a stream of bytes
+    """)
+    return
+
+
+@app.cell
+def _():
+    import tiktoken
+    print(f"{tiktoken.__version__=}")
+    return (tiktoken,)
+
+
+@app.cell
+def _(tiktoken):
+    bpe_tokenizer = tiktoken.get_encoding("gpt2")
+    return (bpe_tokenizer,)
+
+
+@app.cell
+def _(bpe_tokenizer):
+    _text = """Hello, do you like tea? <|endoftext|> In the sunlit terraces of someunknownPlace."""
+    _integers = bpe_tokenizer.encode(_text, allowed_special={"<|endoftext|>"})
+    print(_integers)
+    print(bpe_tokenizer.decode(_integers))
+    return
+
+
+@app.cell
+def _():
     return
 
 
