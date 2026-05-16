@@ -297,38 +297,38 @@ def _(mo):
         """
         graph TD
         Start(["Input String:<br/>aaabdaaabac"]) --> Init[Initialize Vocabulary]
-    
+
         subgraph S1 [Step 1: Base Characters]
         direction LR
             Vocab1["Vocab (Size 4):<br/>a:0, b:1, d:2, c:3"]
             Enc1["Encoding:<br/>0,0,0,1,2,0,0,0,1,0,3"]
         end
-    
+
         Init --> S1
         S1 --Set aa=4--> S2
-    
+
         subgraph S2 [Step 2: Vocab Size 5]
         direction LR
             Vocab2["Vocab (Size 5):<br/>a:0, b:1, d:2, c:3, aa:4"]
             Enc2["Encoding:<br/>4,0,1,2,4,0,1,0,3"]
         end
-    
+
         S2 -- Set ab=5 --> S3
-    
+
         subgraph S3 [Step 3: Vocab Size 6]
         direction LR
             Vocab3["Vocab (Size 6):<br/>... aa:4, ab:5"]
             Enc3["Encoding:<br/>4,5,2,4,5,0,3"]
         end
-    
+
         S3 -- "Set aaab=6, aaabd=7" --> S4
-    
+
         subgraph S4 [Step 4: Vocab Size 8]
         direction LR
             Vocab4["Vocab (Size 8):<br/>... aaab:6, aaabd:7"]
             Enc4["Encoding:<br/>7,6,0,3"]
         end
-    
+
         style S2 fill:#f9f,stroke:#333
         style S3 fill:#bbf,stroke:#333
         style S4 fill:#bfb,stroke:#000
