@@ -220,3 +220,5 @@ __marimo__/
 .agents/skills/marimo-notebook/references/UI.md
 .agents/skills/marimo-notebook/references/WATCHING.md
 data/the-verdict.txt
+.agents/
+.codex
