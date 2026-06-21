@@ -6,7 +6,6 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "anywidget>=0.11.0",
-    "basedpyright>=1.39.7",
     "marimo>=0.23.1",
     "matplotlib>=3.10.9",
     "mcp>=1.27.0",
@@ -23,6 +22,7 @@ dependencies = [
 dev = [
     "altair>=6.1.0",
     "nbformat>=5.10.4",
+    "basedpyright>=1.39.7",
     "openai>=2.34.0",
     "python-lsp-ruff>=2.3.1",
     "python-lsp-server>=1.14.0",

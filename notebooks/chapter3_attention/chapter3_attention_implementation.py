@@ -12,6 +12,14 @@ def _():
     return Path, mo
 
 
+@app.cell
+def _():
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    return (plt,)
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
@@ -156,7 +164,7 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(rf"""
-    #### Code for $x^2$
+    #### Code for $x^{(2)}$
     {mo.image("notebooks/chapter3_attention/public/fixed_weight_context_vector.png", height=250, width=500)}
     """)
     return
@@ -291,10 +299,10 @@ def _(attn_weights, inputs):
     # Step3: context vector
     all_context_vecs = attn_weights @ inputs
     print(all_context_vecs)
-    return
+    return (all_context_vecs,)
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     # summary
     mo.mermaid(r"""
@@ -305,6 +313,170 @@ def _(mo):
     style S2 fill:#444400,stroke:#000
     style S3 fill:#9944AA,stroke:#A80
     """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(attn_scores, inputs, plt):
+    # Visualize the attention score matrix multiplication: inputs @ inputs.T
+    _fig, _axes = plt.subplots(1, 3, figsize=(14, 5))
+
+    # Matrix 1: inputs (6x3)
+    _ax1 = _axes[0]
+    _im1 = _ax1.imshow(inputs.numpy(), cmap="Blues", aspect="auto")
+    _ax1.set_title("Inputs X\n(6 tokens × 3 dims)", fontsize=12)
+    _ax1.set_xlabel("Embedding dimension")
+    _ax1.set_ylabel("Token position")
+    _ax1.set_xticks(range(3))
+    _ax1.set_yticks(range(6))
+    _ax1.set_yticklabels([f"x^{i + 1}" for i in range(6)])
+    # Annotate values on the result matrix
+    for _i in range(6):
+        for _j in range(3):
+            _ax1.text(
+                _j,
+                _i,
+                f"{inputs[_i, _j]:.2f}",
+                ha="center",
+                va="center",
+                fontsize=8,
+                color="white" if inputs[_i, _j] > 0.5 else "black",
+            )
+
+    # Matrix 2: inputs.T (3x6)
+    _ax2 = _axes[1]
+    _im2 = _ax2.imshow(inputs.T.numpy(), cmap="Oranges", aspect="auto")
+    _ax2.set_title("Inputs$^\\top$\n(3 dims × 6 tokens)", fontsize=12)
+    _ax2.set_xlabel("Token position")
+    _ax2.set_ylabel("Embedding dimension")
+    _ax2.set_xticks(range(6))
+    _ax2.set_xticklabels([f"x^{_i + 1}" for _i in range(6)])
+    for _i in range(3):
+        for _j in range(6):
+            _ax2.text(
+                _j,
+                _i,
+                f"{inputs.T[_i, _j]:.2f}",
+                ha="center",
+                va="center",
+                fontsize=8,
+                color="white" if inputs.T[_i, _j] > 0.5 else "black",
+            )
+
+    # Result: attention scores (6x6)
+    _ax3 = _axes[2]
+    _im3 = _ax3.imshow(attn_scores.numpy(), cmap="Purples", aspect="auto")
+    _ax3.set_title("Attention Scores\nX @ X$^\\top$ (6 × 6)", fontsize=12)
+    _ax3.set_xlabel("Key token (j)")
+    _ax3.set_ylabel("Query token (i)")
+    _ax3.set_xticks(range(6))
+    _ax3.set_xticklabels([f"x^{_i + 1}" for _i in range(6)])
+    _ax3.set_yticks(range(6))
+    _ax3.set_yticklabels([f"x^{_i + 1}" for _i in range(6)])
+
+    # Annotate values on the result matrix
+    for _i in range(6):
+        for _j in range(6):
+            _ax3.text(
+                _j,
+                _i,
+                f"{attn_scores[_i, _j]:.2f}",
+                ha="center",
+                va="center",
+                fontsize=8,
+                color="white" if attn_scores[_i, _j] > 0.5 else "black",
+            )
+
+    for _ax in _axes:
+        _ax.grid(False)
+
+    plt.suptitle(
+        "Matrix Multiplication: Attention Scores = Inputs @ Inputs$^\\top$",
+        fontsize=14,
+        y=1.02,
+    )
+    plt.tight_layout()
+    plt.gca()
+    return
+
+
+@app.cell(hide_code=True)
+def _(all_context_vecs, attn_scores, attn_weights, plt):
+    # import matplotlib.pyplot as plt
+
+    __fig, _axes = plt.subplots(1, 3, figsize=(16, 5))
+
+    # Attention scores
+    _ax1 = _axes[0]
+    _im1 = _ax1.imshow(
+        attn_scores.numpy(), cmap="Purples", aspect="equal", 
+    )
+    _ax1.set_title("Step 1: Attention Scores\n(unnormalized)", fontsize=12)
+    _ax1.set_xlabel("Key (j)")
+    _ax1.set_ylabel("Query (i)")
+    for _i in range(6):
+        for _j in range(6):
+            _ax1.text(
+                _j,
+                _i,
+                f"{attn_scores[_i, _j]:.2f}",
+                ha="center",
+                va="center",
+                fontsize=7,
+                color="white" if attn_scores[_i, _j] > 0.5 else "black",
+            )
+
+    # Attention weights (softmax normalized)
+    _ax2 = _axes[1]
+    _im2 = _ax2.imshow(attn_weights.numpy(), cmap="YlOrRd", aspect="equal",)
+    _ax2.set_title("Step 2: Attention Weights\n(softmax per row)", fontsize=12)
+    _ax2.set_xlabel("Key (j)")
+    _ax2.set_ylabel("Query (i)")
+    for _i in range(6):
+        for _j in range(6):
+            _ax2.text(
+                _j,
+                _i,
+                f"{attn_weights[_i, _j]:.2f}",
+                ha="center",
+                va="center",
+                fontsize=7,
+            )
+
+    # Context vectors
+    _ax3 = _axes[2]
+    _im3 = _ax3.imshow(all_context_vecs.numpy(), cmap="Greens", aspect="auto")
+    _ax3.set_title("Step 3: Context Vectors\n(weights @ inputs)", fontsize=12)
+    _ax3.set_xlabel("Embedding dimension")
+    _ax3.set_ylabel("Token position")
+    for _i in range(6):
+        for _j in range(3):
+            _ax3.text(
+                _j,
+                _i,
+                f"{all_context_vecs[_i, _j]:.2f}",
+                ha="center",
+                va="center",
+                fontsize=9,
+            )
+
+    for ax in _axes:
+        ax.set_yticks(range(6))
+        ax.set_yticklabels([f"x^{i + 1}" for i in range(6)])
+
+    _axes[0].set_xticks(range(6))
+    _axes[0].set_xticklabels([f"x^{j + 1}" for j in range(6)])
+    _axes[1].set_xticks(range(6))
+    _axes[1].set_xticklabels([f"x^{j + 1}" for j in range(6)])
+    _axes[2].set_xticks(range(3))
+
+    __fig.suptitle(
+        "Self-Attention Pipeline: X → Scores → Weights → Context Vectors",
+        fontsize=14,
+        y=1.02,
+    )
+    plt.tight_layout()
+    plt.gca()
     return
 
 
@@ -387,6 +559,111 @@ def _(W_key, W_query, W_value, x_2):
     key_2 = x_2 @ W_key
     value_2 = x_2 @ W_value
     print(query_2)
+    return (query_2,)
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    We require the key & value vectors for all input elements as they are used for calculating attention weights
+    """)
+    return
+
+
+@app.cell
+def _(W_key, W_value, inputs):
+    keys = inputs @ W_key
+    values = inputs @ W_value
+    print(f"{keys.shape = }")
+    print(f"{values.shape = }")
+    return keys, values
+
+
+@app.cell(hide_code=True)
+def _(W_key, inputs, keys, plt, values):
+    _fig, _axes = plt.subplots(1, 4, figsize=(18, 4.5))
+
+    # Input matrix X (6x3)
+    _ax = _axes[0]
+    _ax.imshow(inputs.numpy(), cmap="Blues", aspect="auto")
+    _ax.set_title("Inputs X (6×3)", fontsize=11)
+    _ax.set_xlabel("d_in=3")
+    _ax.set_ylabel("Tokens")
+    _ax.set_yticks(range(6))
+    _ax.set_yticklabels([f"x^{i + 1}" for i in range(6)])
+    for _i in range(6):
+        for _j in range(3):
+            _ax.text(_j, _i, f"{inputs[_i,_j]:.2f}", 
+                     ha="center", va="center", fontsize=8, color="white" if inputs[_i,_j] > 0.5 else "black")
+
+    # W_key matrix
+    _ax = _axes[1]
+    _ax.imshow(W_key.detach().numpy(), cmap="Reds", aspect="auto")
+    _ax.set_title("W_key (3×2)", fontsize=11)
+    _ax.set_xlabel("d_out=2")
+    _ax.set_ylabel("d_in=3")
+    for _i in range(3):
+        for _j in range(2):
+            _ax.text(_j, _i, f"{W_key[_i,_j]:.2f}", 
+                     ha="center", va="center", fontsize=8, color="white" if W_key[_i,_j] > 0.5 else "black")
+
+    # Keys = inputs @ W_key
+    _ax = _axes[2]
+    _ax.imshow(keys.numpy(), cmap="Oranges", aspect="auto")
+    _ax.set_title("Keys = X @ W_key (6×2)", fontsize=11)
+    _ax.set_xlabel("d_out=2")
+    _ax.set_ylabel("Tokens")
+    _ax.set_yticks(range(6))
+    _ax.set_yticklabels([f"x^{i + 1}" for i in range(6)])
+    for _i in range(6):
+        for _j in range(2):
+            _ax.text(_j, _i, f"{keys[_i,_j]:.2f}", 
+                     ha="center", va="center", fontsize=8, color="white" if keys[_i,_j] > 1 else "black")
+
+    # Values = inputs @ W_value
+    _ax = _axes[3]
+    _ax.imshow(values.numpy(), cmap="Greens", aspect="auto")
+    _ax.set_title("Values = X @ W_value (6×2)", fontsize=11)
+    _ax.set_xlabel("d_out=2")
+    _ax.set_ylabel("Tokens")
+    _ax.set_yticks(range(6))
+    _ax.set_yticklabels([f"x^{i + 1}" for i in range(6)])
+    for _i in range(6):
+        for _j in range(2):
+            _ax.text(_j, _i, f"{values[_i,_j]:.2f}", 
+                     ha="center", va="center", fontsize=8, color="black")
+
+    for _ax in _axes:
+        _ax.grid(False)
+
+    plt.suptitle(
+        "Trainable Weight Projections: X @ W → Keys & Values", fontsize=14, y=1.02
+    )
+    plt.tight_layout()
+    plt.gca()
+    return
+
+
+@app.cell
+def _(keys, query_2):
+    keys_2 = keys[1]
+    attn_scores_22 = query_2.dot(keys_2)
+    print(attn_scores_22)
+    return
+
+
+@app.cell
+def _(keys, query_2):
+    attn_score_2 = query_2 @ keys.T
+    print(attn_score_2)
+    return (attn_score_2,)
+
+
+@app.cell
+def _(attn_score_2, keys, torch):
+    d_k = keys.shape[-1]
+    attn_weight_2 = torch.softmax(attn_score_2 / d_k ** 0.5, dim=-1)
+    print(attn_weight_2)
     return
 
 
